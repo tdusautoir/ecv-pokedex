@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { View, StyleSheet, Image, TextInput, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { View, StyleSheet, Image, TextInput, TouchableOpacity, FlatList, ActivityIndicator, SafeAreaView } from "react-native";
 import colors from "./lib/colors";
 import { getImageUrl, parseIdInUrl } from "./lib/pokemons";
 import { AppText } from "./components/app-text";
@@ -8,6 +8,9 @@ import Feather from '@expo/vector-icons/Feather';
 import { useDebounce } from "@uidotdev/usehooks";
 import { useState } from "react";
 import { FilterModal, Filters } from "./components/filter-modal";
+import { useRouter } from 'expo-router';
+
+const limit = 30;
 
 const isEmptySearchString = (string: string) => {
   return string.trim() === '';
@@ -17,12 +20,28 @@ export default function Index() {
   const [searchKey, setSearchKey] = useState<string>("")
   const [sortBy, setSortBy] = useState<Filters>();
   const debounceSearchKey = useDebounce<string>(searchKey, 500);
+  const router = useRouter();
 
-  const { isPending, isError, data } = useQuery<GetPokemons>({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    isPending
+  } = useInfiniteQuery<GetPokemons>({
     queryKey: ['pokemons', debounceSearchKey],
-    queryFn: async () => {
+    queryFn: async ({ pageParam, }) => {
       if (!isEmptySearchString(searchKey)) {
         const response = await fetch(`https://pokemon-service-ucql.onrender.com/api/v1/pokemon/search?name=${searchKey.toLocaleLowerCase()}`);
+        if (!response.ok) {
+          return {
+            count: 0,
+            previous: null,
+            next: null,
+            results: []
+          };
+        }
+
         const result = await response.json();
         return {
           count: result.length,
@@ -32,11 +51,15 @@ export default function Index() {
         };
       }
 
-      const response = await fetch("https://pokeapi.co/api/v2/pokemon");
-      const result = await response.json();
+      const response = await fetch(pageParam as string);
+      const result = await response.json() as GetPokemons;
       return result;
-    }
+    },
+    initialPageParam: `https://pokeapi.co/api/v2/pokemon?limit=${limit}`,
+    getNextPageParam: (lastPage) => lastPage.next
   })
+
+  const allPokemons = data?.pages.reduce((last, p) => [...last, ...p.results], [] as GetPokemons['results'])
 
   const sortPokemons = (a: GetPokemons['results'][number], b: GetPokemons['results'][number]) => {
     if (sortBy === 'name') {
@@ -48,68 +71,76 @@ export default function Index() {
   }
 
   return (
-    <View style={{ backgroundColor: colors.primary, flexDirection: 'column', height: '100%' }}>
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <PokeballIcon />
-          <AppText style={{ color: 'white' }} variant="title">Pokédex</AppText>
-        </View>
-        <View style={styles.headerRow}>
-          <View style={styles.headerSearch}>
-            <Feather style={styles.headerSearchIcon} name="search" size={16} />
-            <TextInput
-              value={searchKey}
-              style={[styles.headerSearchInput, !isEmptySearchString(searchKey) && styles.headerSearchInputActive]}
-              placeholder="Search"
-              onChangeText={(text) => setSearchKey(text)} />
-            {!isEmptySearchString(searchKey) && <TouchableOpacity onPress={() => setSearchKey("")}
-              style={styles.headerSearchCancelButton}>
-              <Feather
-                color={colors.primary}
-                name="x"
-                size={16} />
-            </TouchableOpacity>
-            }
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
+      <View style={{ backgroundColor: colors.primary, flexDirection: 'column', height: '100%' }}>
+        <View style={styles.header}>
+          <View style={styles.headerRow}>
+            <PokeballIcon />
+            <AppText style={{ color: 'white' }} variant="title">Pokédex</AppText>
           </View>
-          <FilterModal
-            sortBy={sortBy}
-            setSortBy={setSortBy} />
+          <View style={styles.headerRow}>
+            <View style={styles.headerSearch}>
+              <Feather style={styles.headerSearchIcon} name="search" size={16} />
+              <TextInput
+                value={searchKey}
+                style={[styles.headerSearchInput, !isEmptySearchString(searchKey) && styles.headerSearchInputActive]}
+                placeholder="Search"
+                onChangeText={(text) => setSearchKey(text)} />
+              {!isEmptySearchString(searchKey) && <TouchableOpacity onPress={() => setSearchKey("")}
+                style={styles.headerSearchCancelButton}>
+                <Feather
+                  color={colors.primary}
+                  name="x"
+                  size={16} />
+              </TouchableOpacity>
+              }
+            </View>
+            <FilterModal
+              sortBy={sortBy}
+              setSortBy={setSortBy} />
+          </View>
+        </View>
+        <View style={styles.main}>
+          {isError ? <AppText style={{ textAlign: 'center' }}>Une erreur est survenue</AppText> :
+            isPending ? (
+              <ActivityIndicator size="large" color={colors.primary} />
+            ) : (
+              <FlatList
+                style={{ paddingTop: 24, paddingLeft: 12, paddingRight: 12 }}
+                data={allPokemons ? allPokemons.sort(sortPokemons) : []}
+                numColumns={3}
+                onEndReached={() => {
+                  if (hasNextPage) fetchNextPage();
+                }}
+                onEndReachedThreshold={0.2}
+                columnWrapperStyle={styles.pokemonsListRow}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.pokemonsListCard}
+                    onPress={() => router.navigate(`/pokemon/${parseIdInUrl(item.url)}`)}>
+                    <Image
+                      style={styles.pokemonsListCardImage}
+                      source={{ uri: getImageUrl(parseIdInUrl(item.url)) }} />
+                    <View style={styles.pokemonsListCardText}>
+                      <AppText
+                        numberOfLines={1}
+                        style={{
+                          fontSize: 10,
+                          lineHeight: 16,
+                          textAlign: 'center',
+                          textOverflow: 'ellipsis',
+                          textTransform: 'capitalize'
+                        }}>{item.name}</AppText>
+                    </View>
+                    <AppText style={styles.pokemonsListCardId}>
+                      #{parseIdInUrl(item.url)}
+                    </AppText>
+                  </TouchableOpacity>
+                )} />
+            )}
         </View>
       </View>
-      <View style={styles.main}>
-        {isError ? <AppText style={{ textAlign: 'center' }}>Une erreur est survenue</AppText> :
-          isPending ? (
-            <ActivityIndicator size="large" color={colors.primary} />
-          ) : (
-            <FlatList
-              style={{ paddingTop: 24, paddingLeft: 12, paddingRight: 12 }}
-              data={data?.results.sort(sortPokemons)}
-              numColumns={3}
-              columnWrapperStyle={styles.pokemonsListRow}
-              renderItem={({ item }) => (
-                <View style={styles.pokemonsListCard}>
-                  <Image
-                    style={styles.pokemonsListCardImage}
-                    source={{ uri: getImageUrl(parseIdInUrl(item.url)) }} />
-                  <View style={styles.pokemonsListCardText}>
-                    <AppText
-                      numberOfLines={1}
-                      style={{
-                        fontSize: 10,
-                        lineHeight: 16,
-                        textAlign: 'center',
-                        textOverflow: 'ellipsis',
-                        textTransform: 'capitalize'
-                      }}>{item.name}</AppText>
-                  </View>
-                  <AppText style={styles.pokemonsListCardId}>
-                    #{parseIdInUrl(item.url)}
-                  </AppText>
-                </View>
-              )} />
-          )}
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,10 +1,9 @@
 import { Stack } from "expo-router";
-import { SafeAreaView, StatusBar } from "react-native";
+import { StatusBar } from "react-native";
 import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-import colors from "./lib/colors";
 import {
   Poppins_100Thin,
   Poppins_100Thin_Italic,
@@ -53,9 +52,10 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
-        <Stack screenOptions={{ headerShown: false }} />
-      </SafeAreaView>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="pokemon/[id]" />
+      </Stack>
       <StatusBar barStyle="light-content" />
     </QueryClientProvider >
   )
