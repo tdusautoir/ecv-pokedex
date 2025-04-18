@@ -8,4 +8,12 @@ type GetPokemons = {
     }>
 }
 
-type GetPokemonsFilters = 'name' | 'number' | undefined;
+type GetPokemon = {
+    name: string,
+    types: Array<{
+        type: {
+            name: string,
+            url: string
+        }
+    }>
+}

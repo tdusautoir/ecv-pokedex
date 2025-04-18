@@ -1,8 +1,8 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { View, StyleSheet, Image, TextInput, TouchableOpacity, FlatList, ActivityIndicator, SafeAreaView } from "react-native";
 import colors from "./lib/colors";
 import { getImageUrl, parseIdInUrl } from "./lib/pokemons";
-import { AppText } from "./components/app-text";
+import { AppText } from "./components/app-test";
 import PokeballIcon from "./components/pokeball-icon";
 import Feather from '@expo/vector-icons/Feather';
 import { useDebounce } from "@uidotdev/usehooks";
@@ -18,7 +18,7 @@ const isEmptySearchString = (string: string) => {
 
 export default function Index() {
   const [searchKey, setSearchKey] = useState<string>("")
-  const [sortBy, setSortBy] = useState<Filters>();
+  const [sortBy, setSortBy] = useState<Filters>('number');
   const debounceSearchKey = useDebounce<string>(searchKey, 500);
   const router = useRouter();
 
@@ -71,8 +71,8 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.primary }}>
-      <View style={{ backgroundColor: colors.primary, flexDirection: 'column', height: '100%' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.theme.primary }}>
+      <View style={{ backgroundColor: colors.theme.primary, flexDirection: 'column', height: '100%' }}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <PokeballIcon />
@@ -89,7 +89,7 @@ export default function Index() {
               {!isEmptySearchString(searchKey) && <TouchableOpacity onPress={() => setSearchKey("")}
                 style={styles.headerSearchCancelButton}>
                 <Feather
-                  color={colors.primary}
+                  color={colors.theme.primary}
                   name="x"
                   size={16} />
               </TouchableOpacity>
@@ -103,7 +103,7 @@ export default function Index() {
         <View style={styles.main}>
           {isError ? <AppText style={{ textAlign: 'center' }}>Une erreur est survenue</AppText> :
             isPending ? (
-              <ActivityIndicator size="large" color={colors.primary} />
+              <ActivityIndicator size="large" color={colors.theme.primary} />
             ) : (
               <FlatList
                 style={{ paddingTop: 24, paddingLeft: 12, paddingRight: 12 }}
@@ -147,7 +147,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   header: {
     padding: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.theme.primary,
     flexDirection: 'column',
     gap: 8
   },
@@ -167,13 +167,13 @@ const styles = StyleSheet.create({
   headerSearchIcon: {
     position: 'absolute',
     pointerEvents: 'none',
-    color: colors.primary,
+    color: colors.theme.primary,
     left: 12,
     zIndex: 2
   },
   headerSearchCancelButton: {
     position: 'absolute',
-    color: colors.primary,
+    color: colors.theme.primary,
     right: 12,
     zIndex: 2
   },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     position: 'relative',
     alignItems: 'center',
-    flex: 1,
+    flex: 1 / 3,
     backgroundColor: 'white',
     shadowColor: "rgba(0, 0, 0, 0.2)",
     borderRadius: 8,

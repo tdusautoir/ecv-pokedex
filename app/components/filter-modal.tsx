@@ -3,9 +3,9 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import colors from '../lib/colors';
 import Popover from 'react-native-popover-view';
-import { AppText } from './app-text';
+import { AppText } from './app-test';
 
-export type Filters = 'name' | 'number' | undefined;
+export type Filters = 'name' | 'number';
 
 const FilterButton = ({
     name,
@@ -21,13 +21,13 @@ const FilterButton = ({
     return (
         <TouchableOpacity
             style={styles.filterButton}
-            onPress={() => setSortBy(active ? undefined : name)}>
+            onPress={() => setSortBy(active ? 'number' : name)}>
             <View style={{
                 height: 16,
                 width: 16,
                 borderRadius: 12,
                 borderWidth: 2,
-                borderColor: colors.primary,
+                borderColor: colors.theme.primary,
                 alignItems: 'center',
                 justifyContent: 'center',
             }}>
@@ -36,7 +36,7 @@ const FilterButton = ({
                         height: 8,
                         width: 8,
                         borderRadius: 6,
-                        backgroundColor: colors.primary
+                        backgroundColor: colors.theme.primary
                     }} />
                     : null
                 }
@@ -61,7 +61,7 @@ export const FilterModal = ({
                 popoverStyle={styles.container}
                 from={(
                     <TouchableOpacity style={styles.button}>
-                        <Feather name="hash" size={16} color={colors.primary} />
+                        <Feather name={sortBy === 'number' ? 'hash' : 'underline'} size={16} color={colors.theme.primary} />
                     </TouchableOpacity>
                 )}>
                 <AppText style={styles.title}>Sort by:</AppText>
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
     },
     container: {
-        backgroundColor: colors.primary,
+        backgroundColor: colors.theme.primary,
         padding: 4,
         borderRadius: 12,
     },
