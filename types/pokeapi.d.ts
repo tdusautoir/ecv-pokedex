@@ -7,3 +7,5 @@ type GetPokemons = {
         url: string
     }>
 }
+
+type GetPokemonsFilters = 'name' | 'number' | undefined;

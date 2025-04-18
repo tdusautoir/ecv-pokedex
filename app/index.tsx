@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Text, View, StyleSheet, Image, TextInput, TouchableOpacity, FlatList } from "react-native";
+import { View, StyleSheet, Image, TextInput, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
 import colors from "./lib/colors";
 import { getImageUrl, parseIdInUrl } from "./lib/pokemons";
 import { AppText } from "./components/app-text";
@@ -7,6 +7,7 @@ import PokeballIcon from "./components/pokeball-icon";
 import Feather from '@expo/vector-icons/Feather';
 import { useDebounce } from "@uidotdev/usehooks";
 import { useState } from "react";
+import { FilterModal, Filters } from "./components/filter-modal";
 
 const isEmptySearchString = (string: string) => {
   return string.trim() === '';
@@ -14,9 +15,10 @@ const isEmptySearchString = (string: string) => {
 
 export default function Index() {
   const [searchKey, setSearchKey] = useState<string>("")
+  const [sortBy, setSortBy] = useState<Filters>();
   const debounceSearchKey = useDebounce<string>(searchKey, 500);
 
-  const { isPending, isError, data, error } = useQuery<GetPokemons>({
+  const { isPending, isError, data } = useQuery<GetPokemons>({
     queryKey: ['pokemons', debounceSearchKey],
     queryFn: async () => {
       if (!isEmptySearchString(searchKey)) {
@@ -35,6 +37,15 @@ export default function Index() {
       return result;
     }
   })
+
+  const sortPokemons = (a: GetPokemons['results'][number], b: GetPokemons['results'][number]) => {
+    if (sortBy === 'name') {
+      return a.name.localeCompare(b.name);
+    } else if (sortBy === 'number') {
+      return parseIdInUrl(a.url) - parseIdInUrl(b.url);
+    }
+    return 0;
+  }
 
   return (
     <View style={{ backgroundColor: colors.primary, flexDirection: 'column', height: '100%' }}>
@@ -60,35 +71,43 @@ export default function Index() {
             </TouchableOpacity>
             }
           </View>
-          <TouchableOpacity style={styles.headerSearchButton}>
-            <Feather name="hash" size={16} color={colors.primary} />
-          </TouchableOpacity>
+          <FilterModal
+            sortBy={sortBy}
+            setSortBy={setSortBy} />
         </View>
       </View>
       <View style={styles.main}>
-        <FlatList
-          style={{ paddingTop: 24, paddingLeft: 12, paddingRight: 12 }}
-          data={data?.results}
-          numColumns={3}
-          columnWrapperStyle={styles.pokemonsListRow}
-          renderItem={({ item }) => (
-            <View style={styles.pokemonsListCard}>
-              <Image
-                style={styles.pokemonsListCardImage}
-                source={{ uri: getImageUrl(parseIdInUrl(item.url)) }} />
-              <View style={styles.pokemonsListCardText}>
-                <AppText
-                  numberOfLines={1}
-                  style={{
-                    textOverflow: 'ellipsis',
-                    textTransform: 'capitalize'
-                  }}>{item.name}</AppText>
-              </View>
-              <AppText style={styles.pokemonsListCardId}>
-                #{parseIdInUrl(item.url)}
-              </AppText>
-            </View>
-          )} />
+        {isError ? <AppText style={{ textAlign: 'center' }}>Une erreur est survenue</AppText> :
+          isPending ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : (
+            <FlatList
+              style={{ paddingTop: 24, paddingLeft: 12, paddingRight: 12 }}
+              data={data?.results.sort(sortPokemons)}
+              numColumns={3}
+              columnWrapperStyle={styles.pokemonsListRow}
+              renderItem={({ item }) => (
+                <View style={styles.pokemonsListCard}>
+                  <Image
+                    style={styles.pokemonsListCardImage}
+                    source={{ uri: getImageUrl(parseIdInUrl(item.url)) }} />
+                  <View style={styles.pokemonsListCardText}>
+                    <AppText
+                      numberOfLines={1}
+                      style={{
+                        fontSize: 10,
+                        lineHeight: 16,
+                        textAlign: 'center',
+                        textOverflow: 'ellipsis',
+                        textTransform: 'capitalize'
+                      }}>{item.name}</AppText>
+                  </View>
+                  <AppText style={styles.pokemonsListCardId}>
+                    #{parseIdInUrl(item.url)}
+                  </AppText>
+                </View>
+              )} />
+          )}
       </View>
     </View>
   );
@@ -143,7 +162,6 @@ const styles = StyleSheet.create({
     boxShadow: '0px 1px 3px 1px rgba(0, 0, 0, 0.25) inset;'
   },
   headerSearchInputActive: {
-    // boxShadow: '0px 1px 3px 1px rgba(0, 0, 0, 0.2);',
     shadowOffset: {
       width: 0,
       height: 1
@@ -167,6 +185,8 @@ const styles = StyleSheet.create({
     margin: 4,
     boxShadow: '0px 1px 3px 1px rgba(0, 0, 0, 0.25) inset;',
     borderRadius: 8,
+    alignContent: 'center',
+    justifyContent: 'center',
     overflow: 'scroll'
   },
   pokemonsListRow: {
@@ -181,38 +201,34 @@ const styles = StyleSheet.create({
     },
     shadowRadius: 3,
     shadowOpacity: 1,
+    position: 'relative',
     alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
     backgroundColor: 'white',
     shadowColor: "rgba(0, 0, 0, 0.2)",
     borderRadius: 8,
-    height: 108,
-    position: 'relative',
+    paddingTop: 16,
   },
   pokemonsListCardImage: {
     width: 72,
     height: 72,
-    position: 'absolute',
-    marginLeft: 'auto',
-    marginRight: 'auto',
     zIndex: 1
   },
   pokemonsListCardText: {
     backgroundColor: '#efefef',
-    borderRadius: 8,
-    position: 'absolute',
     width: '100%',
-    alignItems: 'center',
+    borderRadius: 8,
+    marginTop: -24,
     paddingTop: 24,
-    paddingBottom: 4,
-    paddingLeft: 8,
-    paddingRight: 8,
-    bottom: 0
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    paddingBottom: 4
   },
   pokemonsListCardId: {
     position: 'absolute',
     top: 4,
+    fontSize: 8,
+    lineHeight: 12,
     right: 4,
     color: "#666666"
   }
