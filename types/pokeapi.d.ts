@@ -10,8 +10,28 @@ type GetPokemons = {
 
 type GetPokemon = {
     name: string,
+    weight: number,
+    height: number,
     types: Array<{
         type: {
+            name: string,
+            url: string
+        }
+    }>,
+    stats: Array<{
+        base_stat: number,
+        effort: number,
+        stat: {
+            name: string,
+            url: string
+        }
+    }>
+}
+
+type GetPokemonSpecies = {
+    flavor_text_entries: Array<{
+        flavor_text: string
+        language: {
             name: string,
             url: string
         }

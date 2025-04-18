@@ -7,10 +7,11 @@ import { AppText } from "../components/app-test";
 import PokeballIcon from "../components/pokeball-icon";
 import { getImageUrl } from "../lib/pokemons";
 import Badge from "../components/badge";
-
-const Subtitle = ({ color, children }: { children: React.ReactNode, color: string }) => (
-    <AppText style={[styles.subtitle, { color }]}>{children}</AppText>
-)
+import Description from "./components/descriptions";
+import BaseStats from "./components/base-stats";
+import React from "react";
+import Subtitle from "./components/subtitle";
+import About from "./components/about";
 
 export default function PokemonPage() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,10 +29,10 @@ export default function PokemonPage() {
     const mainColor = colors.types[data.types[0].type.name as keyof typeof colors.types];
 
     return (
-        <View style={{ flex: 1, position: 'relative', padding: 8, backgroundColor: mainColor }}>
+        <View style={[styles.container, { backgroundColor: mainColor }]}>
             <PokeballIcon width={208} height={208} color="#FFFFFF10" style={styles.backgroundIcon} />
             <View style={styles.header}>
-                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <View style={styles.headerTitle}>
                     <TouchableOpacity onPress={() => router.back()}>
                         <Feather name={'arrow-left'} color={'white'} size={24} />
                     </TouchableOpacity>
@@ -46,11 +47,15 @@ export default function PokemonPage() {
             </View>
             <View style={styles.content}>
                 <View style={styles.types}>
-                    {data.types.map(({ type }) => (
-                        <Badge color={colors.types[type.name as keyof typeof colors.types]}>{type.name}</Badge>
+                    {data.types.map(({ type }, index) => (
+                        <Badge key={index} color={colors.types[type.name as keyof typeof colors.types]}>{type.name}</Badge>
                     ))}
                 </View>
-                <Subtitle color={mainColor}>About</Subtitle>
+                <Subtitle>About</Subtitle>
+                <About {...data} />
+                <Description pokemonId={id} />
+                <Subtitle>Base stats</Subtitle>
+                <BaseStats stats={data.stats} />
             </View>
         </View>
     );
@@ -58,6 +63,11 @@ export default function PokemonPage() {
 
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        position: 'relative',
+        padding: 8
+    },
     header: {
         paddingTop: 20,
         paddingLeft: 20,
@@ -65,6 +75,11 @@ const styles = StyleSheet.create({
         paddingRight: 20,
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    headerTitle: {
+        flexDirection: 'row',
+        gap: 8,
         alignItems: 'center'
     },
     backgroundIcon: {
@@ -78,15 +93,12 @@ const styles = StyleSheet.create({
         marginTop: -56,
         backgroundColor: 'white',
         borderRadius: 8,
-        gap: 16
+        gap: 16,
+        paddingHorizontal: 20
     },
     types: {
         flexDirection: 'row',
         justifyContent: 'center',
         gap: 16
-    },
-    subtitle: {
-        textAlign: 'center',
-        fontFamily: 'Poppins_600SemiBold',
     }
 })

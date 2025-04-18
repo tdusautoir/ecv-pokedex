@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Text, SafeAreaView, ActivityIndicator } from "react-native";
 import colors from "../lib/colors";
+import { PokemonProvider } from "../context/pokemonContext";
 
 export default function PokemonPage() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,12 +28,16 @@ export default function PokemonPage() {
         </SafeAreaView>
     )
 
+    const mainColor = colors.types[data.types[0].type.name as keyof typeof colors.types]
+
     return (
         <SafeAreaView style={{
             flex: 1,
-            backgroundColor: colors.types[data.types[0].type.name as keyof typeof colors.types]
+            backgroundColor: mainColor
         }}>
-            <Stack screenOptions={{ headerShown: false }} />
+            <PokemonProvider color={mainColor}>
+                <Stack screenOptions={{ headerShown: false }} />
+            </PokemonProvider>
         </SafeAreaView>
     );
 }

@@ -3,7 +3,7 @@ import { Text, TextProps, StyleSheet } from 'react-native';
 export type AppTextProps = TextProps & {
     lightColor?: string;
     darkColor?: string;
-    variant?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+    variant?: 'default' | 'title' | 'semibold' | 'subtitle' | 'link';
 };
 
 export function AppText({
@@ -19,7 +19,7 @@ export function AppText({
                 { fontFamily: 'Poppins_400Regular' },
                 variant === 'default' ? styles.default : undefined,
                 variant === 'title' ? styles.title : undefined,
-                variant === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
+                variant === 'semibold' ? styles.semibold : undefined,
                 variant === 'subtitle' ? styles.subtitle : undefined,
                 variant === 'link' ? styles.link : undefined,
                 style,
@@ -31,13 +31,13 @@ export function AppText({
 
 const styles = StyleSheet.create({
     default: {
-        fontSize: 16,
-        lineHeight: 24,
+        fontSize: 10,
+        lineHeight: 16,
         fontFamily: 'Poppins_400Regular',
     },
-    defaultSemiBold: {
-        fontSize: 16,
-        lineHeight: 24,
+    semibold: {
+        fontSize: 10,
+        lineHeight: 16,
         fontWeight: '600',
         fontFamily: 'Poppins_600SemiBold',
     },
